@@ -1,0 +1,26 @@
+
+{- Tree data structure -}
+data Tree elem = Empty
+               | Node (Tree elem) elem (Tree elem)
+%name Tree tree, tree1
+
+
+{- insert elem to the tree -}
+insert : Ord elem => elem -> Tree elem -> Tree elem
+insert x Empty = Node Empty x Empty
+insert x orig@(Node left val right) = case compare x val of
+                                      LT => Node (insert x left) val right
+                                      EQ => orig
+                                      GT => Node left val (insert x right)
+
+{- converts List to Tree -}
+listToTree : Ord elem => List elem -> Tree elem
+listToTree [] = Empty
+listToTree (x :: xs) = insert x $ listToTree xs
+
+{- converts Tree to List -}
+treeToList : Tree elem -> List elem
+treeToList Empty = []
+treeToList (Node left x right) = let leftList  = treeToList left
+                                     rightList = treeToList right in
+                                     leftList ++ [x] ++ rightList
