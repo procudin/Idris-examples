@@ -9,20 +9,20 @@ Matrix n m elem = Vect n (Vect m elem)
 transposeMatrix : Matrix m n elem -> Matrix n m elem
 transposeMatrix [] = replicate _ []
 transposeMatrix (x :: xs) = let xsTrans = transposeMatrix xs in
-                             zipWith (\a, b => (a :: b)) x xsTrans
+                                zipWith (\a, b => (a :: b)) x xsTrans
 
 
 {- summ matrix -}
 addMatrix : Num elem => Matrix n m elem -> Matrix n m elem -> Matrix n m elem
 addMatrix [] [] = []
 addMatrix (x :: xs) (y :: ys) = let tailAdd = addMatrix xs ys in
-                                zipWith (\a, b => (a + b)) x y :: tailAdd
+                                    zipWith (\a, b => (a + b)) x y :: tailAdd
 
 
 {- mult matrix -}
 sumOfMulForRow : Num elem => Vect n elem -> Vect n elem -> elem
 sumOfMulForRow [] [] = 0
-sumOfMulForRow (x::xs) (y::ys) = foldr1 (+) $ Data.Vect.zipWith (\a, b => (a * b)) (x::xs) (y::ys)
+sumOfMulForRow xs@(_::_) ys@(_::_) = foldr1 (+) $ zipWith (\a, b => (a * b)) xs ys
 
 calcResultRow : Num elem => Vect n elem -> Matrix p n elem -> Vect p elem
 calcResultRow left [] = []
