@@ -12,6 +12,7 @@ SchemaType SString = String
 SchemaType SInt = Int
 SchemaType (x .+. y) = (SchemaType x, SchemaType y)
 
+-- Storage type
 record DataStore where
      constructor MkData
      schema: Schema
@@ -19,6 +20,7 @@ record DataStore where
      items: Vect size (SchemaType schema)
 
 {- Add value to the store -}
+total
 addToStore : (store: DataStore) -> (item: SchemaType (schema store)) -> DataStore
 addToStore (MkData schema size items) item = MkData schema _ $ addToData items
   where
@@ -26,12 +28,15 @@ addToStore (MkData schema size items) item = MkData schema _ $ addToData items
     addToData [] = [item]
     addToData (x :: xs) = x :: addToData xs
 
+{- Converts generic data to string -}
+total
 display : SchemaType schema -> String
 display {schema = SString} item = item
 display {schema = SInt} item = show item
 display {schema = (x .+. y)} (item1, item2) = display item1 ++ ", " ++ display item2
 
 {- Get value from the store -}
+total
 getEntry : (pos: Integer) -> (store: DataStore) -> Maybe (String, DataStore)
 getEntry pos store = let store_items = items store in
                          case integerToFin pos (size store) of
@@ -46,6 +51,7 @@ data Command : Schema -> Type where
   Quit : Command schema
 
 {- Converts list of types to schema -}
+total
 parseSchema : List String -> Maybe Schema
 parseSchema ("String" :: xs) = case xs of
                                     [] => Just SString
@@ -61,12 +67,14 @@ parseSchema _ = Nothing
 
 
 {- Changes schema of the storage only if it is empty -}
+total
 setSchema : (store: DataStore) -> (newSchema: Schema) -> Maybe DataStore
 setSchema store newSchema = case size store of
                                  Z => Just $ MkData newSchema _ []
                                  S k => Nothing
 
 {- Inner function for parseBySchema -}
+total
 parsePrefix : (schema: Schema) -> (input: String) -> Maybe (SchemaType schema, String)
 parsePrefix SString input = case unpack input of
                                  [] => Nothing
@@ -86,6 +94,7 @@ parsePrefix (schema1 .+. schema2) input =
               Just (r_val, input'') => Just ((l_val, r_val), input'')
 
 {- Parses user's input basing on schema -}
+total
 parseBySchema : (schema: Schema) -> (input: String) -> Maybe (SchemaType schema)
 parseBySchema schema input = case parsePrefix schema input of
                                   Just (res, "") => Just res
@@ -93,6 +102,7 @@ parseBySchema schema input = case parsePrefix schema input of
                                   Nothing        => Nothing
 
 {- Parses user's commands -}
+total
 parseCommand : (schema: Schema) -> (input: String) -> (rest: String) -> Maybe (Command schema)
 parseCommand schema "add" rest = case parseBySchema schema rest of
                                       Nothing => Nothing
@@ -107,11 +117,13 @@ parseCommand schema "schema" rest = case parseSchema (words rest) of
 parseCommand _ _ _ = Nothing
 
 {- Common parsing method -}
+total
 parse : (schema: Schema) -> (input: String) -> Maybe (Command schema)
 parse schema input = case span (/= ' ') input of
                           (cmd, args) => parseCommand schema cmd $ ltrim args
 
 {- Function for processing repl input -}
+total
 processInput : (store: DataStore) -> (input: String) -> Maybe (String, DataStore)
 processInput store input = case parse (schema store) input of
                                 Nothing         => Just ("Invalid command\n", store)
