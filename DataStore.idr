@@ -55,14 +55,12 @@ total
 parseSchema : List String -> Maybe Schema
 parseSchema ("String" :: xs) = case xs of
                                     [] => Just SString
-                                    _  => case parseSchema xs of
-                                               Nothing => Nothing
-                                               Just xs_sch => Just (SString .+. xs_sch)
+                                    _  => do xs_sch <- parseSchema xs
+                                             Just (SString .+. xs_sch)
 parseSchema ("Int" :: xs) = case xs of
                                  [] => Just SInt
-                                 _  => case parseSchema xs of
-                                            Nothing => Nothing
-                                            Just xs_sch => Just (SInt .+. xs_sch)
+                                 _  => do xs_sch <- parseSchema xs
+                                          Just (SInt .+. xs_sch)
 parseSchema _ = Nothing
 
 
@@ -85,13 +83,10 @@ parsePrefix SString input = case unpack input of
 parsePrefix SInt input = case span isDigit input of
                               ("", rest) => Nothing
                               (num, rest) => Just (cast num, ltrim rest)
-parsePrefix (schema1 .+. schema2) input =
-  case parsePrefix schema1 input of
-    Nothing => Nothing
-    Just (l_val, input') =>
-         case parsePrefix schema2 input' of
-              Nothing => Nothing
-              Just (r_val, input'') => Just ((l_val, r_val), input'')
+parsePrefix (schema1 .+. schema2) input = do
+  (l_val, input') <- parsePrefix schema1 input
+  (r_val, input'') <- parsePrefix schema2 input'
+  Just ((l_val, r_val), input'')
 
 {- Parses user's input basing on schema -}
 total
@@ -104,16 +99,14 @@ parseBySchema schema input = case parsePrefix schema input of
 {- Parses user's commands -}
 total
 parseCommand : (schema: Schema) -> (input: String) -> (rest: String) -> Maybe (Command schema)
-parseCommand schema "add" rest = case parseBySchema schema rest of
-                                      Nothing => Nothing
-                                      Just resTok => Just $ Add resTok
+parseCommand schema "add" rest = do resTok <- parseBySchema schema rest
+                                    Just $ Add resTok
 parseCommand schema "get" val = case all isDigit (unpack val) of
                                      False => Nothing
                                      True => Just $ Get $ cast val
 parseCommand schema "quit" "" = Just Quit
-parseCommand schema "schema" rest = case parseSchema (words rest) of
-                                         Nothing => Nothing
-                                         Just schemaok => Just $ SetSchema schemaok
+parseCommand schema "schema" rest = do schemaok <- parseSchema (words rest)
+                                       Just $ SetSchema schemaok
 parseCommand _ _ _ = Nothing
 
 {- Common parsing method -}
