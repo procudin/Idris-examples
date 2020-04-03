@@ -46,11 +46,17 @@ getEntry pos store = let store_items = items store in
                               Nothing => Just ("Out of range\n", store)
                               Just id => Just (display (index id (items store)) ++ "\n", store)
 
+total
+getEntries : (store: DataStore) -> Maybe (String, DataStore)
+getEntries store@(MkData _ Z []) = Just ("Empty\n", store)
+getEntries store@(MkData _ (S len) (x::xs)) = Just (foldr (\val, acc => display val ++ "\n" ++ acc) "" (x::xs), store)
+
 {- Object model for all console commands -}
 data Command : Schema -> Type where
   SetSchema : (newSchema: Schema) -> Command schema
   Add : SchemaType schema -> Command schema
   Get : Integer -> Command schema
+  GetAll : Command schema
   Quit : Command schema
 
 {- Converts list of types to schema -}
@@ -112,6 +118,7 @@ total
 parseCommand : (schema: Schema) -> (input: String) -> (rest: String) -> Maybe (Command schema)
 parseCommand schema "add" rest = do resTok <- parseBySchema schema rest
                                     Just $ Add resTok
+parseCommand schema "get" "" = Just GetAll
 parseCommand schema "get" val = case all isDigit (unpack val) of
                                      False => Nothing
                                      True => Just $ Get $ cast val
@@ -136,6 +143,7 @@ processInput store input = case parse (schema store) input of
                                                                    Nothing => Just ("Cant update schema\n", store)
                                 Just (Add item) => Just ("ID " ++ show (size store) ++ "\n", addToStore store item)
                                 Just (Get pos)  => getEntry pos store
+                                Just GetAll  => getEntries store
                                 Just Quit       => Nothing
 
 main : IO ()
