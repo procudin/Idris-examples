@@ -3,12 +3,14 @@ import Data.Vect
 {- Data scheme for storage - storage either string or int, or combination of them -}
 infixr 5 .+. -- sheme combining operator .+. with right assotiativity and priority 5 (like == and /=)
 data Schema = SString
+            | SChar
             | SInt
             | (.+.) Schema Schema
 
 -- Converts schema to corresponding type
 SchemaType : Schema -> Type
 SchemaType SString = String
+SchemaType SChar = Char
 SchemaType SInt = Int
 SchemaType (x .+. y) = (SchemaType x, SchemaType y)
 
@@ -33,6 +35,7 @@ total
 display : SchemaType schema -> String
 display {schema = SString} item = item
 display {schema = SInt} item = show item
+display {schema = SChar} item = show item
 display {schema = (x .+. y)} (item1, item2) = display item1 ++ ", " ++ display item2
 
 {- Get value from the store -}
@@ -57,6 +60,10 @@ parseSchema ("String" :: xs) = case xs of
                                     [] => Just SString
                                     _  => do xs_sch <- parseSchema xs
                                              Just (SString .+. xs_sch)
+parseSchema ("Char" :: xs) = case xs of
+                                    [] => Just SChar
+                                    _  => do xs_sch <- parseSchema xs
+                                             Just (SChar .+. xs_sch)
 parseSchema ("Int" :: xs) = case xs of
                                  [] => Just SInt
                                  _  => do xs_sch <- parseSchema xs
@@ -80,6 +87,10 @@ parsePrefix SString input = case unpack input of
                                                      (quoted, '"' :: rest) => Just (pack quoted, ltrim $ pack rest)
                                                      _ => Nothing
                                  _ => Nothing
+parsePrefix SChar input = case unpack input of
+                               [] => Nothing
+                               ('\'' :: val :: '\'' :: xs) => Just (val, ltrim $ pack xs)
+                               _ => Nothing
 parsePrefix SInt input = case span isDigit input of
                               ("", rest) => Nothing
                               (num, rest) => Just (cast num, ltrim rest)
