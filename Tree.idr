@@ -24,3 +24,10 @@ treeToList Empty = []
 treeToList (Node left x right) = let leftList  = treeToList left
                                      rightList = treeToList right in
                                      leftList ++ [x] ++ rightList
+
+
+Eq elem => Eq (Tree elem) where
+  (==) Empty Empty = True
+  (==) (Node left val right) (Node left' val' right') = val == val' && left == left' &&  right == right'
+  (==) _ _ = False
+  
