@@ -27,3 +27,26 @@ my_vect_length (x :: xs) = 1 + my_vect_length xs
 {- returns lenght of Vect with typelevel variable -}
 my_vect_length_2 : Vect n elem -> Nat
 my_vect_length_2 _ {n} = n
+
+
+{- reverse vector function with type proofs -}
+my_reverse : Vect n elem -> Vect n elem
+my_reverse [] = []
+my_reverse (x :: xs) = reverse_prf $ my_reverse xs ++ [x]
+  where
+    reverse_prf : Vect (k + 1) elem -> Vect (S k) elem
+    reverse_prf {k} result = rewrite plusCommutative 1 k in result
+
+{- more efficient reverse vector function with type proofs -}
+my_reverse_fast : Vect n elem -> Vect n elem
+my_reverse_fast xs = reverse' [] xs
+  where
+    append_nil : (acc : Vect n1 elem) -> Vect (plus n1 0) elem
+    append_nil {n1} acc = rewrite plusZeroRightNeutral n1 in acc
+
+    append_xs : Vect (S (m + k)) elem -> Vect (plus m (S k)) elem
+    append_xs {m} {k} xs = rewrite sym (plusSuccRightSucc m k) in xs
+
+    reverse' :  Vect n elem -> Vect m elem -> Vect (n + m) elem
+    reverse' acc [] =  append_nil acc
+    reverse' acc (x :: xs) = append_xs $ reverse' (x::acc) xs
