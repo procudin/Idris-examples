@@ -51,7 +51,30 @@ my_reverse_fast xs = reverse' [] xs
     reverse' acc [] =  append_nil acc
     reverse' acc (x :: xs) = append_xs $ reverse' (x::acc) xs
 
+{- removes element from vector only if vector contains this element -}
+removeElem : (value : a) -> (xs : Vect (S n) a) -> {auto prf : Elem value xs} -> Vect n a
+removeElem value (value :: ys) {prf = Here} = ys
+removeElem value {n = Z} (y :: []) {prf = (There later)} = absurd later
+removeElem value {n = (S k)} (y :: ys) {prf = (There later)} = y :: removeElem value ys
 
+{- proof that empty vect doesnt contain specific element -}
+notInNil : Elem value [] -> Void
+notInNil Here impossible
+notInNil (There _) impossible
+
+{- proof that the vect doesnt contain specific element if head and tail do not contain -}
+notInTail : (notHere : (value = x) -> Void) -> (notThere : Elem value xs -> Void) -> Elem value (x :: xs) -> Void
+notInTail notHere notThere Here = notHere Refl
+notInTail notHere notThere (There later) = notThere later
+
+{- checks whether the vector contains specific value -}
+myIsElem : DecEq a => (value : a) -> (xs : Vect n a) -> Dec (Elem value xs)
+myIsElem value [] = No notInNil
+myIsElem value (x :: xs) = case decEq value x of
+                              (Yes Refl) => Yes Here
+                              (No notHere) => case myIsElem value xs of
+                                                   (Yes prf) => Yes (There prf)
+                                                   (No notThere) => No (notInTail notHere notThere)
 
 {- proof: if heads are not equal, then the vectors must be unequal -}
 headUnequal : DecEq a => {xs : Vect n a} -> {ys : Vect n a} -> (contra : (x = y) -> Void) -> ((x :: xs) = (y :: ys)) -> Void
