@@ -43,9 +43,3 @@ Applicative Tree where
   (<*>) _ Empty = Empty
   (<*>) Empty _ = Empty
   (<*>) (Node left fa right) a = map fa a
-
-{- Monad implementation -}
-Monad Tree where
-  (>>=) Empty fa = Empty
-  (>>=) (Node left x right) fa = fa x
-  
